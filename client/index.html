@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Data Form</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+        <h1 class="text-2xl font-bold mb-6 text-center text-gray-800">Submit Your Health Data</h1>
+        
+        <form id="dataForm" class="space-y-4">
+            <!-- Age Input -->
+            <div>
+                <label for="age" class="block text-sm font-medium text-gray-700">Age:</label>
+                <input type="number" id="age" name="age" required 
+                    class="mt-1 p-2 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+
+            <!-- Gender Select -->
+            <div>
+                <label for="gender" class="block text-sm font-medium text-gray-700">Gender:</label>
+                <select id="gender" name="gender" required 
+                    class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                </select>
+            </div>
+
+            <!-- Activity Level Select -->
+            <div>
+                <label for="activity_level" class="block text-sm font-medium text-gray-700">Activity Level:</label>
+                <select id="activity_level" name="activity_level" required 
+                    class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="low">Low</option>
+                    <option value="moderate">Moderate</option>
+                    <option value="high">High</option>
+                </select>
+            </div>
+
+            <!-- Goal Select -->
+            <div>
+                <label for="goal" class="block text-sm font-medium text-gray-700">Goal:</label>
+                <select id="goal" name="goal" required 
+                    class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="weight loss">Weight Loss</option>
+                    <option value="muscle gain">Muscle Gain</option>
+                    <option value="maintenance">Maintenance</option>
+                </select>
+            </div>
+
+            <!-- Weight Input -->
+            <div>
+                <label for="weight" class="block text-sm font-medium text-gray-700">Weight (kg):</label>
+                <input type="number" id="weight" name="weight" required 
+                    class="mt-1 p-2 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+
+            <!-- Height Input -->
+            <div>
+                <label for="height" class="block text-sm font-medium text-gray-700">Height (cm):</label>
+                <input type="number" id="height" name="height" required 
+                    class="mt-1 p-2 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+
+            <!-- Current Calorie Intake Input -->
+            <div>
+                <label for="current_calories" class="block text-sm font-medium text-gray-700">Current Calories Intake (kcal):</label>
+                <input type="number" id="current_calories" name="current_calories" required 
+                    class="mt-1 p-2 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+
+            <!-- Submit Button -->
+            <div>
+                <button type="submit" 
+                    class="w-full bg-indigo-600 text-white p-2 rounded-md font-semibold hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                    Submit
+                </button>
+            </div>
+        </form>
+
+        <!-- Response Section -->
+        <div id="responseSection" class="mt-6 hidden">
+            <h2 class="text-xl font-semibold text-gray-800">Your Suggested Intake</h2>
+            <p id="responseText" class="mt-2 text-gray-700"></p>
+            <h3 class="mt-4 text-lg font-medium text-gray-800">Food Suggestions</h3>
+            <ul id="foodSuggestions" class="mt-2 list-disc list-inside text-gray-700"></ul>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('dataForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            const age = document.getElementById('age').value;
+            const gender = document.getElementById('gender').value;
+            const activity_level = document.getElementById('activity_level').value;
+            const goal = document.getElementById('goal').value;
+            const weight = document.getElementById('weight').value;
+            const height = document.getElementById('height').value;
+            const current_calories = document.getElementById('current_calories').value;
+
+            fetch('http://127.0.0.1:5000/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    age: age,
+                    gender: gender,
+                    activity_level: activity_level,
+                    goal: goal,
+                    weight: weight,
+                    height: height,
+                    current_calories: current_calories
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+
+                // Display the response
+                const responseSection = document.getElementById('responseSection');
+                const responseText = document.getElementById('responseText');
+                const foodSuggestions = document.getElementById('foodSuggestions');
+
+                // Update the text content with the API response
+                responseText.textContent = data.response;
+
+                // Clear old suggestions
+                foodSuggestions.innerHTML = '';
+
+                // Split the suggestions and add them to the list
+                const suggestions = data.food_suggestion.split('. ');
+                suggestions.forEach(suggestion => {
+                    if (suggestion.trim() !== '') {
+                        const li = document.createElement('li');
+                        li.textContent = suggestion;
+                        foodSuggestions.appendChild(li);
+                    }
+                });
+
+                // Show the response section
+                responseSection.classList.remove('hidden');
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        });
+    </script>
+</body>
+</html>
